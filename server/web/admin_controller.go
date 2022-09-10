@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strconv"
 	"text/template"
 
@@ -102,7 +103,13 @@ func (a *adminController) TaskStatus() {
 
 	// List Tasks
 	content := make(M)
-	resultList := admin.GetCommand("task", "list").Execute().Content.([][]string)
+	response := admin.GetCommand("task", "list").Execute().Content
+	switch v := response.(type) {
+	case [][]string:
+		content["Data"] = v
+	default:
+		content["Data"] = reflect.TypeOf(response)
+	}
 	fields := []string{
 		"Task Name",
 		"Task Spec",
@@ -112,7 +119,7 @@ func (a *adminController) TaskStatus() {
 	}
 
 	content["Fields"] = fields
-	content["Data"] = resultList
+
 	data["Content"] = content
 	data["Title"] = "Tasks"
 	writeTemplate(rw, data, tasksTpl, defaultScriptsTpl)
